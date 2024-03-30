@@ -1,0 +1,59 @@
+<script type="application/javascript">
+    const portfolioId = new URLSearchParams(window.location.search).get('portfolioId');
+    const targetValue = new URLSearchParams(window.location.search).get('targetValue');
+    fetch('https://api.parqet.com/v1/allocation/assemble', {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json, text/plain, */*',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            portfolioIds: [
+                portfolioId
+            ],
+            holdingIds: [],
+            currency: 'EUR',
+            assetTypes: []
+        })
+    }).then(response => response.json()).then(data => {
+        let sum = 0;
+        data.assetDimensions.forEach(asset => {
+            sum += asset.value;
+        });
+        document.getElementById('progress').value = sum;
+        document.getElementById('progress').setAttribute('max', targetValue);
+        const progressPercentage = Math.round(sum / targetValue * 100);
+        document.getElementById('percentage').innerText = `${progressPercentage}%`;
+
+    }).catch(error => {
+        console.error(error);
+    });
+</script>
+
+<style>
+    body {
+        background-color: rgba(55,65,81,1) !important;
+        font-family: Arial, sans-serif;
+    }
+    div {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+    #percentage {
+        color: white;
+        font-size: 2rem;
+        margin-left: 2rem;
+    }
+    #progress {
+        height: 20px;
+        width: 30%;
+    }
+</style>
+
+<body>
+    <div>
+        <progress id="progress" max="" value=""></progress><i id="percentage"></i>
+    </div>
+</body>
