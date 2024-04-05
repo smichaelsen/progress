@@ -21,15 +21,16 @@
             data.assetDimensions.forEach(asset => {
                 sum += asset.value;
             });
+
             document.getElementById('progress').value = sum;
             document.getElementById('progress').setAttribute('max', targetValue);
-            const progressPercentage = Math.round(sum / targetValue * 100);
+            const progressPercentage = (sum / targetValue * 100).toFixed(2);
             document.getElementById('percentage').innerText = `${progressPercentage}%`;
-
         }).catch(error => {
             console.error(error);
         });
     }
+
     updateProgress();
     // update hourly
     setInterval(updateProgress, 3600000);
@@ -37,20 +38,23 @@
 
 <style>
     body {
-        background-color: rgba(55,65,81,1) !important;
+        background-color: rgba(55, 65, 81, 1) !important;
         font-family: Arial, sans-serif;
     }
+
     div {
         display: flex;
         justify-content: center;
         align-items: center;
         height: 100vh;
     }
+
     #percentage {
         color: white;
         font-size: 2rem;
         margin-left: 2rem;
     }
+
     #progress {
         height: 20px;
         width: 30%;
