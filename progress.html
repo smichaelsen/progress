@@ -1,6 +1,7 @@
 <script type="application/javascript">
     const portfolioId = new URLSearchParams(window.location.search).get('portfolioId');
     const targetValue = new URLSearchParams(window.location.search).get('targetValue');
+    const decimals = Math.max(Math.min(parseInt(new URLSearchParams(window.location.search).get('decimals')), 0), 3);
     function updateProgress() {
         fetch('https://api.parqet.com/v1/allocation/assemble', {
             method: 'POST',
@@ -24,7 +25,7 @@
 
             document.getElementById('progress').value = sum;
             document.getElementById('progress').setAttribute('max', targetValue);
-            const progressPercentage = (sum / targetValue * 100).toFixed(2);
+            const progressPercentage = (sum / targetValue * 100).toFixed(decimals);
             document.getElementById('percentage').innerText = `${progressPercentage}%`;
         }).catch(error => {
             console.error(error);
