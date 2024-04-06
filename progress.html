@@ -1,7 +1,7 @@
 <script type="application/javascript">
     const portfolioId = new URLSearchParams(window.location.search).get('portfolioId');
     const targetValue = new URLSearchParams(window.location.search).get('targetValue');
-    const decimals = Math.max(Math.min(parseInt(new URLSearchParams(window.location.search).get('decimals')), 0), 3);
+    const decimals = Math.min(Math.max(parseInt(new URLSearchParams(window.location.search).get('decimals')), 0), 3);
     function updateProgress() {
         fetch('https://api.parqet.com/v1/allocation/assemble', {
             method: 'POST',
