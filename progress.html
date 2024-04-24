@@ -1,3 +1,5 @@
+<html>
+<title>Financial Progress</title>
 <script type="application/javascript">
     const portfolioId = new URLSearchParams(window.location.search).get('portfolioId');
     const decimals = Math.min(Math.max(parseInt(new URLSearchParams(window.location.search).get('decimals')), 0), 3); // 0 to 3 decimals
@@ -69,3 +71,5 @@
         <progress id="progress" max="" value=""></progress><i id="percentage"></i>
     </div>
 </body>
+
+</html>
