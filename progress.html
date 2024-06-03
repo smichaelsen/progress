@@ -1,29 +1,36 @@
 <html>
 <title>Financial Progress</title>
 <script type="application/javascript">
-    const portfolioId = new URLSearchParams(window.location.search).get('portfolioId');
+    const portfolioIds = new URLSearchParams(window.location.search).get('portfolioId').split(',');
     const decimals = Math.min(Math.max(parseInt(new URLSearchParams(window.location.search).get('decimals')), 0), 3); // 0 to 3 decimals
     const targetValue = Math.min(Math.max(parseInt(new URLSearchParams(window.location.search).get('targetValue')), 10), 1000*1000*1000*1000); // 10 to 1 trillion
     function updateProgress() {
-        fetch('https://api.parqet.com/v1/allocation/assemble', {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json, text/plain, */*',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                portfolioIds: [
-                    portfolioId
-                ],
-                holdingIds: [],
-                currency: 'EUR',
-                assetTypes: []
-            })
-        }).then(response => response.json()).then(data => {
-            let sum = 0;
-            data.assetDimensions.forEach(asset => {
-                sum += asset.value;
+        let sum = 0;
+        const requests = portfolioIds.map(portfolioId => {
+            return fetch('https://api.parqet.com/v1/allocation/assemble', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json, text/plain, */*',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    portfolioIds: [
+                        portfolioId
+                    ],
+                    holdingIds: [],
+                    currency: 'EUR',
+                    assetTypes: []
+                })
+            }).then(response => response.json()).then(data => {
+                data.assetDimensions.forEach(asset => {
+                    sum += asset.value;
+                });
+            }).catch(error => {
+                console.error(error);
             });
+        });
+
+        Promise.all(requests).then(() => {
             const progressPercentage = (
                 Math.min(100.0, (sum / targetValue) * 100)
             ).toFixed(decimals);
@@ -31,8 +38,6 @@
             document.getElementById('progress').value = sum;
             document.getElementById('progress').setAttribute('max', targetValue);
             document.getElementById('percentage').innerText = `${progressPercentage}%`;
-        }).catch(error => {
-            console.error(error);
         });
     }
 
