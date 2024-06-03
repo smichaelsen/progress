@@ -22,7 +22,7 @@
                     assetTypes: []
                 })
             }).then(response => response.json()).then(data => {
-                data.assetDimensions.forEach(asset => {
+                data.assets.identifier.forEach(asset => {
                     sum += asset.value;
                 });
             }).catch(error => {
