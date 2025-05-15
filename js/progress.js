@@ -1,4 +1,4 @@
-import { updateCountdown } from './countdown.js';
+import { updateCountdown, initCountdownClickHandler } from './countdown.js';
 
 /**
  * Global variables for configuration
@@ -129,6 +129,9 @@ export function updateProgress() {
 
             // Start the countdown
             updateCountdown(targetDate);
+
+            // Initialize the click handler for toggling between countdown and absolute date
+            initCountdownClickHandler(targetDate);
 
             // Update countdown every second
             if (!window.countdownInterval) {
