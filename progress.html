@@ -4,6 +4,8 @@
     const portfolioIds = new URLSearchParams(window.location.search).get('portfolioId').split(',');
     const decimals = Math.min(Math.max(parseInt(new URLSearchParams(window.location.search).get('decimals')), 0), 3); // 0 to 3 decimals
     const targetValue = Math.min(Math.max(parseInt(new URLSearchParams(window.location.search).get('targetValue')), 10), 1000*1000*1000*1000); // 10 to 1 trillion
+    const assumedYearlyReturn = parseFloat(new URLSearchParams(window.location.search).get('assumedYearlyReturn')) || 0; // Default to 0 if not provided
+    const monthlyContribution = parseFloat(new URLSearchParams(window.location.search).get('monthlyContribution')) || 0; // Default to 0 if not provided
     function updateProgress() {
         let sum = 0;
         const requests = portfolioIds.map(portfolioId => {
@@ -38,7 +40,93 @@
             document.getElementById('progress').value = sum;
             document.getElementById('progress').setAttribute('max', targetValue);
             document.getElementById('percentage').innerText = `${progressPercentage}%`;
+
+            // Calculate time to reach target if assumedYearlyReturn is provided
+            if (assumedYearlyReturn > 0 && sum < targetValue) {
+                let yearsToTarget;
+
+                if (monthlyContribution <= 0) {
+                    // If no monthly contribution, use simple compound interest formula
+                    // Formula: years = ln(target/current) / ln(1 + rate)
+                    yearsToTarget = Math.log(targetValue / sum) / Math.log(1 + (assumedYearlyReturn / 100));
+                } else {
+                    // With monthly contributions, we need to calculate numerically
+                    // because there's no simple closed-form formula
+                    const monthlyRate = assumedYearlyReturn / 100 / 12;
+                    let currentValue = sum;
+                    let months = 0;
+
+                    // Simulate month by month until we reach the target
+                    while (currentValue < targetValue && months < 1200) { // Cap at 100 years
+                        // Add monthly contribution
+                        currentValue += monthlyContribution;
+                        // Apply monthly interest
+                        currentValue *= (1 + monthlyRate);
+                        months++;
+                    }
+
+                    yearsToTarget = months / 12;
+                }
+
+                // Store the target date
+                const targetDate = new Date();
+                targetDate.setFullYear(targetDate.getFullYear() + Math.floor(yearsToTarget));
+
+                // Add the remaining fraction of a year
+                const remainingFraction = yearsToTarget - Math.floor(yearsToTarget);
+                const millisecondsInYear = 365.25 * 24 * 60 * 60 * 1000;
+                targetDate.setTime(targetDate.getTime() + (remainingFraction * millisecondsInYear));
+
+                // Show the countdown element
+                document.getElementById('countdown-container').style.display = 'block';
+
+                // Start the countdown
+                updateCountdown(targetDate);
+
+                // Update countdown every second
+                if (!window.countdownInterval) {
+                    window.countdownInterval = setInterval(() => updateCountdown(targetDate), 1000);
+                }
+            } else {
+                // Hide the countdown if no yearly return or already reached target
+                document.getElementById('countdown-container').style.display = 'none';
+                if (window.countdownInterval) {
+                    clearInterval(window.countdownInterval);
+                    window.countdownInterval = null;
+                }
+            }
         });
+    }
+
+    function updateCountdown(targetDate) {
+        const now = new Date();
+        const difference = targetDate - now;
+
+        if (difference <= 0) {
+            document.getElementById('countdown').innerText = 'Target reached!';
+            if (window.countdownInterval) {
+                clearInterval(window.countdownInterval);
+                window.countdownInterval = null;
+            }
+            return;
+        }
+
+        // Calculate time components
+        const seconds = Math.floor((difference / 1000) % 60);
+        const minutes = Math.floor((difference / (1000 * 60)) % 60);
+        const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+        const days = Math.floor((difference / (1000 * 60 * 60 * 24)) % 30.4375); // Average days in a month
+        const months = Math.floor((difference / (1000 * 60 * 60 * 24 * 30.4375)) % 12);
+        const years = Math.floor(difference / (1000 * 60 * 60 * 24 * 365.25));
+
+        // Format the countdown text
+        let countdownText = '';
+        if (years > 0) countdownText += `${years} year${years !== 1 ? 's' : ''}, `;
+        if (months > 0) countdownText += `${months} month${months !== 1 ? 's' : ''}, `;
+        if (days > 0) countdownText += `${days} day${days !== 1 ? 's' : ''}, `;
+        countdownText += `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+        document.getElementById('countdown').innerText = countdownText;
     }
 
     updateProgress();
@@ -52,11 +140,19 @@
         font-family: Arial, sans-serif;
     }
 
-    div {
+    .container {
         display: flex;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
         height: 100vh;
+    }
+
+    .progress-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
     }
 
     #percentage {
@@ -69,11 +165,28 @@
         height: 20px;
         width: 30%;
     }
+
+    #countdown-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 2rem;
+        color: white;
+    }
+
+    #countdown {
+        font-size: 1.2rem;
+    }
 </style>
 
 <body>
-    <div>
-        <progress id="progress" max="" value=""></progress><i id="percentage"></i>
+    <div class="container">
+        <div class="progress-container">
+            <progress id="progress" max="" value=""></progress><i id="percentage"></i>
+        </div>
+        <div id="countdown-container" style="display: none;">
+            <p id="countdown"></p>
+        </div>
     </div>
 </body>
 
