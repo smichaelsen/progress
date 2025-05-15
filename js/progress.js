@@ -83,6 +83,33 @@ export function updateProgress() {
                     months++;
                 }
 
+                // Calculate more precise fraction of the last month
+                if (currentValue > targetValue && months > 0) {
+                    // Back up one month to get the value before exceeding target
+                    const previousValue = (currentValue - monthlyContribution) / (1 + monthlyRate);
+
+                    // Calculate how much we need to grow from previousValue to reach targetValue
+                    const remainingGrowth = targetValue - previousValue;
+
+                    // Calculate what fraction of a month is needed for this growth
+                    // This considers both the monthly contribution and the interest
+                    const valueAfterContribution = previousValue + monthlyContribution;
+                    const interestNeeded = targetValue - valueAfterContribution;
+
+                    if (interestNeeded > 0) {
+                        // If we still need growth after the contribution
+                        const interestRate = valueAfterContribution * monthlyRate;
+                        const fractionOfMonth = interestNeeded / interestRate;
+
+                        // Adjust the months count (subtract 1 for the last month we backed up, add the fraction)
+                        months = months - 1 + Math.min(1, Math.max(0, fractionOfMonth));
+                    } else {
+                        // If the contribution alone exceeds what we need
+                        const fractionOfMonth = remainingGrowth / monthlyContribution;
+                        months = months - 1 + Math.min(1, Math.max(0, fractionOfMonth));
+                    }
+                }
+
                 yearsToTarget = months / 12;
             }
 
