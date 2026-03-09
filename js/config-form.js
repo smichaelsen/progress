@@ -1,8 +1,49 @@
+import { fetchPortfolioAllocation } from './api.js';
+
 const form = document.getElementById('config-form');
 const portfolioFields = document.getElementById('portfolio-fields');
 const btnAddPortfolio = document.getElementById('btn-add-portfolio');
 const progressContainer = document.querySelector('.progress-container');
 const countdownContainer = document.getElementById('countdown-container');
+
+/** Debounce delay in milliseconds before validating a portfolio ID */
+const VALIDATION_DELAY_MS = 600;
+
+/**
+ * Validates a portfolio ID by querying the API and updates the status indicator.
+ * @param {HTMLInputElement} input - The input element containing the portfolio ID
+ * @param {HTMLElement} status - The status indicator element
+ */
+async function validatePortfolioId(input, status) {
+    const portfolioId = input.value.trim();
+
+    if (!portfolioId) {
+        status.textContent = '';
+        status.className = 'portfolio-status';
+        return;
+    }
+
+    status.textContent = '...';
+    status.className = 'portfolio-status validating';
+
+    try {
+        const { totalValue } = await fetchPortfolioAllocation(portfolioId);
+        // Only update if the input value hasn't changed during the request
+        if (input.value.trim() === portfolioId) {
+            const formatted = totalValue.toLocaleString('de-DE', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            status.innerHTML = `<span class="status-icon valid">&#10003;</span> ${formatted} EUR`;
+            status.className = 'portfolio-status valid';
+        }
+    } catch {
+        if (input.value.trim() === portfolioId) {
+            status.innerHTML = `<span class="status-icon invalid">&#10007;</span> Portfolio not found`;
+            status.className = 'portfolio-status invalid';
+        }
+    }
+}
 
 /**
  * Creates a portfolio ID input row.
@@ -28,6 +69,30 @@ function createPortfolioRow(value = '', removable = false) {
         btn.textContent = 'Remove';
         btn.addEventListener('click', () => row.remove());
         row.appendChild(btn);
+    }
+
+    const status = document.createElement('span');
+    status.className = 'portfolio-status';
+    row.appendChild(status);
+
+    // Debounced validation on input
+    let debounceTimer;
+    input.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        const id = input.value.trim();
+        if (!id) {
+            status.textContent = '';
+            status.className = 'portfolio-status';
+            return;
+        }
+        status.textContent = '...';
+        status.className = 'portfolio-status validating';
+        debounceTimer = setTimeout(() => validatePortfolioId(input, status), VALIDATION_DELAY_MS);
+    });
+
+    // Validate immediately if pre-filled
+    if (value) {
+        validatePortfolioId(input, status);
     }
 
     return row;
