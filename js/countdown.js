@@ -1,85 +1,97 @@
-// Track whether to show countdown or absolute date
-let showAbsoluteDate = false;
+// Time constants
+const MS_PER_SECOND = 1000;
+const MS_PER_MINUTE = MS_PER_SECOND * 60;
+const MS_PER_HOUR = MS_PER_MINUTE * 60;
+const MS_PER_DAY = MS_PER_HOUR * 24;
+const AVG_DAYS_PER_MONTH = 30.4375;
+const AVG_DAYS_PER_YEAR = 365.25;
 
-// Store the current click handler reference so it can be properly removed
+export const MS_PER_YEAR = MS_PER_DAY * AVG_DAYS_PER_YEAR;
+
+// Module state
+let showAbsoluteDate = false;
 let currentClickHandler = null;
+let countdownInterval = null;
+
+/**
+ * Starts the countdown interval, replacing any existing one.
+ * @param {Date} targetDate - The date when the target will be reached
+ */
+export function startCountdown(targetDate) {
+    stopCountdown();
+    updateCountdown(targetDate);
+    initCountdownClickHandler(targetDate);
+    countdownInterval = setInterval(() => updateCountdown(targetDate), MS_PER_SECOND);
+}
+
+/**
+ * Stops and clears the countdown interval.
+ */
+export function stopCountdown() {
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+    }
+}
 
 /**
  * Updates the countdown display based on the target date
  * @param {Date} targetDate - The date when the target will be reached
  */
-export function updateCountdown(targetDate) {
+function updateCountdown(targetDate) {
+    const countdownElement = document.getElementById('countdown');
     const now = new Date();
     const difference = targetDate - now;
 
     if (difference <= 0) {
-        document.getElementById('countdown').innerText = 'Target reached!';
-        if (window.countdownInterval) {
-            clearInterval(window.countdownInterval);
-            window.countdownInterval = null;
-        }
+        countdownElement.innerText = 'Target reached!';
+        stopCountdown();
         return;
     }
 
-    // Format the display text based on the current mode
-    let displayText = '';
-
     if (showAbsoluteDate) {
-        // Format the absolute end date/time
-        const options = { 
-            year: 'numeric', 
-            month: 'long', 
+        const options = {
+            year: 'numeric',
+            month: 'long',
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
             second: '2-digit'
         };
-        displayText = targetDate.toLocaleDateString(undefined, options);
+        countdownElement.innerText = targetDate.toLocaleDateString(undefined, options);
     } else {
-        // Calculate time components for countdown
-        const seconds = Math.floor((difference / 1000) % 60);
-        const minutes = Math.floor((difference / (1000 * 60)) % 60);
-        const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
-        const days = Math.floor((difference / (1000 * 60 * 60 * 24)) % 30.4375); // Average days in a month
-        const months = Math.floor((difference / (1000 * 60 * 60 * 24 * 30.4375)) % 12);
-        const years = Math.floor(difference / (1000 * 60 * 60 * 24 * 365.25));
+        const years = Math.floor(difference / (MS_PER_DAY * AVG_DAYS_PER_YEAR));
+        const months = Math.floor((difference / (MS_PER_DAY * AVG_DAYS_PER_MONTH)) % 12);
+        const days = Math.floor((difference / MS_PER_DAY) % AVG_DAYS_PER_MONTH);
+        const hours = Math.floor((difference / MS_PER_HOUR) % 24);
+        const minutes = Math.floor((difference / MS_PER_MINUTE) % 60);
+        const seconds = Math.floor((difference / MS_PER_SECOND) % 60);
 
-        // Format the countdown text
+        let displayText = '';
         if (years > 0) displayText += `${years} year${years !== 1 ? 's' : ''}, `;
         if (months > 0) displayText += `${months} month${months !== 1 ? 's' : ''}, `;
         if (days > 0) displayText += `${days} day${days !== 1 ? 's' : ''}, `;
         displayText += `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }
 
-    document.getElementById('countdown').innerText = displayText;
+        countdownElement.innerText = displayText;
+    }
 }
 
 /**
  * Initialize the countdown click handler
- * This should be called once when the countdown is first displayed
  * @param {Date} targetDate - The date when the target will be reached
  */
-export function initCountdownClickHandler(targetDate) {
+function initCountdownClickHandler(targetDate) {
     const countdownElement = document.getElementById('countdown');
 
-    // Remove any existing click handler to prevent duplicates
     if (currentClickHandler) {
         countdownElement.removeEventListener('click', currentClickHandler);
     }
 
-    // Store the new handler so it can be removed later
-    currentClickHandler = () => toggleDisplayMode(targetDate);
+    currentClickHandler = () => {
+        showAbsoluteDate = !showAbsoluteDate;
+        updateCountdown(targetDate);
+    };
     countdownElement.addEventListener('click', currentClickHandler);
-
-    // Add cursor pointer to indicate it's clickable
     countdownElement.style.cursor = 'pointer';
-}
-
-/**
- * Toggle between showing countdown and absolute date
- * @param {Date} targetDate - The date when the target will be reached
- */
-function toggleDisplayMode(targetDate) {
-    showAbsoluteDate = !showAbsoluteDate;
-    updateCountdown(targetDate);
 }

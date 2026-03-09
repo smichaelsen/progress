@@ -1,4 +1,4 @@
-import { updateCountdown, initCountdownClickHandler } from './countdown.js';
+import { startCountdown, stopCountdown, MS_PER_YEAR } from './countdown.js';
 
 /**
  * Global variables for configuration
@@ -67,8 +67,9 @@ export function updateProgress() {
             Math.min(100.0, (sum / targetValue) * 100)
         ).toFixed(decimals);
 
-        document.getElementById('progress').value = sum;
-        document.getElementById('progress').setAttribute('max', targetValue);
+        const progressElement = document.getElementById('progress');
+        progressElement.value = sum;
+        progressElement.max = targetValue;
         document.getElementById('percentage').innerText = `${progressPercentage}%`;
 
         // Calculate time to reach target if assumedYearlyReturn is provided
@@ -125,35 +126,16 @@ export function updateProgress() {
                 yearsToTarget = months / 12;
             }
 
-            // Store the target date
-            const targetDate = new Date();
-            targetDate.setFullYear(targetDate.getFullYear() + Math.floor(yearsToTarget));
+            // Calculate the target date
+            const targetDate = new Date(Date.now() + yearsToTarget * MS_PER_YEAR);
 
-            // Add the remaining fraction of a year
-            const remainingFraction = yearsToTarget - Math.floor(yearsToTarget);
-            const millisecondsInYear = 365.25 * 24 * 60 * 60 * 1000;
-            targetDate.setTime(targetDate.getTime() + (remainingFraction * millisecondsInYear));
-
-            // Show the countdown element
+            // Show the countdown element and start ticking
             document.getElementById('countdown-container').style.display = 'block';
-
-            // Start the countdown
-            updateCountdown(targetDate);
-
-            // Initialize the click handler for toggling between countdown and absolute date
-            initCountdownClickHandler(targetDate);
-
-            // Update countdown every second
-            if (!window.countdownInterval) {
-                window.countdownInterval = setInterval(() => updateCountdown(targetDate), 1000);
-            }
+            startCountdown(targetDate);
         } else {
             // Hide the countdown if no yearly return or already reached target
             document.getElementById('countdown-container').style.display = 'none';
-            if (window.countdownInterval) {
-                clearInterval(window.countdownInterval);
-                window.countdownInterval = null;
-            }
+            stopCountdown();
         }
     });
 }

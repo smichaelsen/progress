@@ -1,10 +1,13 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
 <title>Financial Progress</title>
 <script type="module" src="js/main.js"></script>
 
 <style>
     body {
-        background-color: rgba(55, 65, 81, 1) !important;
+        background-color: rgba(55, 65, 81, 1);
         font-family: Arial, sans-serif;
     }
 
@@ -46,11 +49,12 @@
         font-size: 1.2rem;
     }
 </style>
+</head>
 
 <body>
     <div class="container">
         <div class="progress-container">
-            <progress id="progress" max="" value=""></progress><i id="percentage"></i>
+            <progress id="progress" max="100" value="0"></progress><span id="percentage"></span>
         </div>
         <div id="countdown-container" style="display: none;">
             <p id="countdown"></p>
