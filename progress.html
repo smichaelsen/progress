@@ -106,10 +106,34 @@
         align-items: center;
         margin-bottom: 0.4rem;
         gap: 0.4rem;
+        flex-wrap: wrap;
     }
 
     #portfolio-fields .portfolio-row input {
         flex: 1;
+    }
+
+    .portfolio-status {
+        width: 100%;
+        font-size: 0.8rem;
+        min-height: 1.2em;
+        color: rgba(156, 163, 175, 1);
+    }
+
+    .portfolio-status.validating {
+        color: rgba(156, 163, 175, 1);
+    }
+
+    .portfolio-status.valid {
+        color: rgba(74, 222, 128, 1);
+    }
+
+    .portfolio-status.invalid {
+        color: rgba(248, 113, 113, 1);
+    }
+
+    .status-icon {
+        font-weight: bold;
     }
 
     #config-form button {

@@ -1,4 +1,5 @@
 import { startCountdown, stopCountdown, MS_PER_YEAR } from './countdown.js';
+import { fetchPortfolioAllocation } from './api.js';
 
 /**
  * Global variables for configuration
@@ -27,34 +28,8 @@ export function setConfig(config) {
 export function updateProgress() {
     let sum = 0;
     const requests = portfolioIds.map(portfolioId => {
-        return fetch('https://api.parqet.com/v1/allocation/assemble', {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json, text/plain, */*',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                portfolioIds: [
-                    portfolioId
-                ],
-                holdingIds: [],
-                currency: 'EUR',
-                assetTypes: []
-            })
-        }).then(response => {
-            if (!response.ok) {
-                throw new Error(`API request failed for portfolio ${portfolioId}: ${response.status} ${response.statusText}`);
-            }
-            return response.json();
-        }).then(data => {
-            const assets = data?.assets?.identifier;
-            if (Array.isArray(assets)) {
-                assets.forEach(asset => {
-                    sum += asset.value;
-                });
-            } else {
-                console.warn(`Unexpected response structure for portfolio ${portfolioId}`, data);
-            }
+        return fetchPortfolioAllocation(portfolioId).then(({ totalValue }) => {
+            sum += totalValue;
         }).catch(error => {
             console.error(`Failed to fetch portfolio ${portfolioId}:`, error);
         });
