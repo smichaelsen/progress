@@ -41,16 +41,28 @@ export function updateProgress() {
                 currency: 'EUR',
                 assetTypes: []
             })
-        }).then(response => response.json()).then(data => {
-            data.assets.identifier.forEach(asset => {
-                sum += asset.value;
-            });
+        }).then(response => {
+            if (!response.ok) {
+                throw new Error(`API request failed for portfolio ${portfolioId}: ${response.status} ${response.statusText}`);
+            }
+            return response.json();
+        }).then(data => {
+            const assets = data?.assets?.identifier;
+            if (Array.isArray(assets)) {
+                assets.forEach(asset => {
+                    sum += asset.value;
+                });
+            } else {
+                console.warn(`Unexpected response structure for portfolio ${portfolioId}`, data);
+            }
         }).catch(error => {
-            console.error(error);
+            console.error(`Failed to fetch portfolio ${portfolioId}:`, error);
         });
     });
 
-    Promise.all(requests).then(() => {
+    Promise.all(requests).catch(error => {
+        console.error('Failed to fetch portfolio data:', error);
+    }).then(() => {
         const progressPercentage = (
             Math.min(100.0, (sum / targetValue) * 100)
         ).toFixed(decimals);
@@ -60,7 +72,7 @@ export function updateProgress() {
         document.getElementById('percentage').innerText = `${progressPercentage}%`;
 
         // Calculate time to reach target if assumedYearlyReturn is provided
-        if (assumedYearlyReturn > 0 && sum < targetValue) {
+        if (assumedYearlyReturn > 0 && sum > 0 && sum < targetValue) {
             let yearsToTarget;
 
             if (monthlyContribution <= 0) {
@@ -86,7 +98,7 @@ export function updateProgress() {
                 // Calculate more precise fraction of the last month
                 if (currentValue > targetValue && months > 0) {
                     // Back up one month to get the value before exceeding target
-                    const previousValue = (currentValue - monthlyContribution) / (1 + monthlyRate);
+                    const previousValue = currentValue / (1 + monthlyRate) - monthlyContribution;
 
                     // Calculate how much we need to grow from previousValue to reach targetValue
                     const remainingGrowth = targetValue - previousValue;
@@ -112,8 +124,6 @@ export function updateProgress() {
 
                 yearsToTarget = months / 12;
             }
-
-            console.log({ yearsToTarget });
 
             // Store the target date
             const targetDate = new Date();

@@ -1,6 +1,9 @@
 // Track whether to show countdown or absolute date
 let showAbsoluteDate = false;
 
+// Store the current click handler reference so it can be properly removed
+let currentClickHandler = null;
+
 /**
  * Updates the countdown display based on the target date
  * @param {Date} targetDate - The date when the target will be reached
@@ -59,11 +62,14 @@ export function updateCountdown(targetDate) {
 export function initCountdownClickHandler(targetDate) {
     const countdownElement = document.getElementById('countdown');
 
-    // Remove any existing click handlers to prevent duplicates
-    countdownElement.removeEventListener('click', toggleDisplayMode);
+    // Remove any existing click handler to prevent duplicates
+    if (currentClickHandler) {
+        countdownElement.removeEventListener('click', currentClickHandler);
+    }
 
-    // Add click handler with the current target date
-    countdownElement.addEventListener('click', () => toggleDisplayMode(targetDate));
+    // Store the new handler so it can be removed later
+    currentClickHandler = () => toggleDisplayMode(targetDate);
+    countdownElement.addEventListener('click', currentClickHandler);
 
     // Add cursor pointer to indicate it's clickable
     countdownElement.style.cursor = 'pointer';
