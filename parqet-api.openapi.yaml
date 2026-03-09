@@ -1,0 +1,154 @@
+openapi: 3.1.0
+info:
+  title: Parqet Allocation API
+  description: |
+    Unofficial Parqet (formerly Tresor One) API used to retrieve portfolio
+    allocation data. This specification only covers the subset of the API that
+    is consumed by this application — the full API response contains additional
+    data (securities breakdowns by country, region, sector, industry, type)
+    that is not used here.
+  version: 1.0.0
+
+servers:
+  - url: https://api.parqet.com/v1
+
+paths:
+  /allocation/assemble:
+    post:
+      operationId: assembleAllocation
+      summary: Retrieve portfolio allocation data
+      description: |
+        Returns allocation data for one or more portfolios, grouped by asset
+        type and by identifier (ISIN / cash). This app uses the
+        `assets.identifier` array to sum up the current EUR value of all
+        holdings across the requested portfolios.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AllocationRequest'
+      responses:
+        '200':
+          description: Allocation data for the requested portfolios
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllocationResponse'
+
+components:
+  schemas:
+    AllocationRequest:
+      type: object
+      required:
+        - portfolioIds
+        - holdingIds
+        - currency
+        - assetTypes
+      properties:
+        portfolioIds:
+          type: array
+          items:
+            type: string
+          description: List of portfolio IDs to include.
+          example: ["<portfolio-id>"]
+        holdingIds:
+          type: array
+          items:
+            type: string
+          description: Optional list of specific holding IDs to filter by. Empty array means all holdings.
+          example: []
+        currency:
+          type: string
+          description: Currency in which values are returned.
+          example: EUR
+        assetTypes:
+          type: array
+          items:
+            type: string
+          description: Optional list of asset types to filter by. Empty array means all types.
+          example: []
+
+    AllocationResponse:
+      type: object
+      required:
+        - assets
+      properties:
+        assets:
+          $ref: '#/components/schemas/Assets'
+
+    Assets:
+      type: object
+      required:
+        - identifier
+      properties:
+        identifier:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetGroup'
+          description: |
+            Assets grouped by identifier (typically ISIN for securities, or
+            "Cash" for cash positions). Each entry represents one distinct
+            security or cash position and its aggregated value.
+
+    AssetGroup:
+      type: object
+      required:
+        - id
+        - share
+        - value
+        - label
+        - holdings
+      properties:
+        id:
+          type: string
+          description: |
+            Identifier for the asset group — typically an ISIN
+            (e.g. "LU0290358497") or "Cash" for cash positions.
+          example: IE000716YHJ7
+        share:
+          type: number
+          format: float
+          description: Percentage share of the total portfolio value (0–100).
+          example: 43.37
+        value:
+          type: number
+          format: float
+          description: Current value in the requested currency.
+          example: 23547.49
+        label:
+          type: string
+          description: Human-readable name of the asset.
+          example: Invesco FTSE All-World UCITS ETF Acc
+        holdings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Holding'
+          description: Individual holdings that make up this asset group.
+
+    Holding:
+      type: object
+      required:
+        - id
+        - share
+        - value
+        - label
+      properties:
+        id:
+          type: string
+          description: Unique holding identifier.
+          example: hld_67c624665ea7d93403b98d6c
+        share:
+          type: number
+          format: float
+          description: Percentage share of the total portfolio value (0–100).
+          example: 43.37
+        value:
+          type: number
+          format: float
+          description: Current value of this holding in the requested currency.
+          example: 23547.49
+        label:
+          type: string
+          description: Human-readable name of the holding.
+          example: Invesco FTSE All-World UCITS ETF Acc
