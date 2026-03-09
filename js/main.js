@@ -1,11 +1,19 @@
 import { setConfig, updateProgress } from './progress.js';
+import { initConfigForm, showForm } from './config-form.js';
 
 /**
  * Initialize application by parsing URL parameters and starting the progress update
  */
 function initApp() {
-    // Parse URL parameters
+    initConfigForm();
+
     const urlParams = new URLSearchParams(window.location.search);
+
+    // If no query parameters are present, show the configuration form
+    if (urlParams.toString() === '') {
+        showForm();
+        return;
+    }
 
     // Parse portfolio IDs
     const portfolioIdParam = urlParams.get('portfolioId');
@@ -41,6 +49,15 @@ function initApp() {
 
     // Update hourly
     setInterval(updateProgress, 3600000);
+
+    // Press 'C' to open configuration form
+    document.addEventListener('keydown', (e) => {
+        // Don't trigger when typing in an input or form is already visible
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (e.key === 'c' || e.key === 'C') {
+            showForm();
+        }
+    });
 }
 
 // Initialize the application when the DOM is fully loaded
