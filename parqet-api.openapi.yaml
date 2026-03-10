@@ -13,6 +13,29 @@ servers:
   - url: https://api.parqet.com/v1
 
 paths:
+  /portfolios/{portfolioId}:
+    get:
+      operationId: getPortfolio
+      summary: Retrieve public portfolio metadata
+      description: |
+        Returns portfolio metadata for a public portfolio. For this app, the
+        relevant part is `portfolio.subAccounts`, which exposes the human-
+        readable names of sub-depots / sub-accounts shown in the Parqet UI.
+      parameters:
+        - name: portfolioId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Public portfolio ID.
+      responses:
+        '200':
+          description: Public portfolio metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioResponse'
+
   /allocation/assemble:
     post:
       operationId: assembleAllocation
@@ -22,6 +45,12 @@ paths:
         type and by identifier (ISIN / cash). This app uses the
         `assets.identifier` array to sum up the current EUR value of all
         holdings across the requested portfolios.
+
+        The endpoint also supports scoping the response to specific
+        sub-accounts / sub-depots via `subAccounts`. Each sub-account value is
+        a composite identifier in the form `<portfolioId>:<subAccountId>`.
+        Example:
+        `6954dc5a2336d3fdaa0285f0:a43a47666b25c8d9e2c0553334e9c3935d3eaf71`.
       requestBody:
         required: true
         content:
@@ -42,6 +71,7 @@ components:
       type: object
       required:
         - portfolioIds
+        - subAccounts
         - holdingIds
         - currency
         - assetTypes
@@ -52,6 +82,17 @@ components:
             type: string
           description: List of portfolio IDs to include.
           example: ["<portfolio-id>"]
+        subAccounts:
+          type: array
+          items:
+            type: string
+          description: |
+            Optional list of sub-account filters. Each item uses the composite
+            form `<portfolioId>:<subAccountId>`. Empty array means all
+            sub-accounts.
+          example:
+            - "6954dc5a2336d3fdaa0285f0:a43a47666b25c8d9e2c0553334e9c3935d3eaf71"
+            - "6954dc5a2336d3fdaa0285f0:d183dedcad74a174f218a608fbc17a861a63f2bc"
         holdingIds:
           type: array
           items:
@@ -68,6 +109,10 @@ components:
             type: string
           description: Optional list of asset types to filter by. Empty array means all types.
           example: []
+        timeframe:
+          type: string
+          description: Optional timeframe selector for the assembled data.
+          example: max
 
     AllocationResponse:
       type: object
@@ -76,6 +121,69 @@ components:
       properties:
         assets:
           $ref: '#/components/schemas/Assets'
+
+    PortfolioResponse:
+      type: object
+      required:
+        - portfolio
+      properties:
+        portfolio:
+          $ref: '#/components/schemas/Portfolio'
+
+    Portfolio:
+      type: object
+      required:
+        - _id
+        - name
+        - currency
+        - public
+        - subAccounts
+      properties:
+        _id:
+          type: string
+          description: Portfolio identifier.
+          example: 6954dc5a2336d3fdaa0285f0
+        name:
+          type: string
+          description: Portfolio display name.
+          example: Eltern
+        currency:
+          type: string
+          description: Base portfolio currency.
+          example: EUR
+        public:
+          type: boolean
+          description: Whether the portfolio is publicly accessible.
+          example: true
+        subAccounts:
+          type: array
+          description: |
+            List of named sub-depots / sub-accounts shown in the Parqet UI.
+            For example, a portfolio can contain multiple depots such as
+            `Direkt-Depot (.... 0020)` and `Direkt-Depot (.... 5615)`.
+          items:
+            $ref: '#/components/schemas/SubAccount'
+
+    SubAccount:
+      type: object
+      required:
+        - name
+        - hashedAccountNumber
+      properties:
+        name:
+          type: string
+          description: Human-readable sub-depot / sub-account name.
+          example: Direkt-Depot (.... 0020)
+        hashedAccountNumber:
+          type: string
+          nullable: true
+          description: |
+            Opaque account identifier exposed by the public portfolio metadata
+            endpoint. This identifies the sub-account conceptually, but the
+            public metadata response may redact it. The `allocation/assemble`
+            endpoint expects a non-redacted sub-account ID embedded in the
+            composite `<portfolioId>:<subAccountId>` request value.
+          example: redactedhn:d1b76aee-406a-4d71-aef7-9e0917abd85b
 
     Assets:
       type: object

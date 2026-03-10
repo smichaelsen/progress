@@ -101,6 +101,16 @@
         flex: 1;
     }
 
+    #config-form .inline-action {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    #config-form .inline-action input {
+        flex: 1;
+    }
+
     #portfolio-fields .portfolio-row {
         display: flex;
         align-items: center;
@@ -130,6 +140,54 @@
 
     .portfolio-status.invalid {
         color: rgba(248, 113, 113, 1);
+    }
+
+    .import-help,
+    .import-status {
+        margin-top: 0.4rem;
+        font-size: 0.8rem;
+        color: rgba(156, 163, 175, 1);
+    }
+
+    .import-status.success {
+        color: rgba(74, 222, 128, 1);
+    }
+
+    .import-status.error {
+        color: rgba(248, 113, 113, 1);
+    }
+
+    .subaccounts {
+        width: 100%;
+        margin-top: 0.2rem;
+        padding: 0.7rem 0.8rem;
+        border: 1px solid rgba(75, 85, 99, 1);
+        border-radius: 6px;
+        background: rgba(31, 41, 55, 0.7);
+    }
+
+    .subaccounts-title {
+        margin-bottom: 0.5rem;
+        font-size: 0.8rem;
+        color: rgba(209, 213, 219, 1);
+    }
+
+    .subaccounts-options {
+        display: grid;
+        gap: 0.4rem;
+    }
+
+    .subaccount-option {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        font-size: 0.85rem;
+        color: white;
+    }
+
+    .subaccount-option input {
+        width: auto;
+        margin: 0;
     }
 
     .status-icon {
@@ -192,6 +250,16 @@
         </div>
 
         <form id="config-form">
+            <div class="form-group">
+                <label for="input-bearer-token">Parqet Bearer Token (optional)</label>
+                <div class="inline-action">
+                    <input type="text" id="input-bearer-token" placeholder="Paste bearer token to import portfolios and sub accounts">
+                    <button type="button" id="btn-import-portfolios">Import</button>
+                </div>
+                <div class="import-help">If provided, the app imports your portfolios and lets you include or exclude specific sub accounts.</div>
+                <div id="import-status" class="import-status"></div>
+            </div>
+
             <div class="form-group">
                 <label>Portfolio IDs</label>
                 <div id="portfolio-fields"></div>
