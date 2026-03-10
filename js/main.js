@@ -19,6 +19,10 @@ function initApp() {
     const portfolioIdParam = urlParams.get('portfolioId');
     const portfolioIds = portfolioIdParam ? portfolioIdParam.split(',') : [];
 
+    // Parse selected sub-accounts
+    const subAccountParam = urlParams.get('subAccount');
+    const subAccounts = subAccountParam ? subAccountParam.split(',').filter(Boolean) : [];
+
     // Parse decimals (0 to 3)
     const decimalsParam = parseInt(urlParams.get('decimals'));
     const decimals = Math.min(Math.max(isNaN(decimalsParam) ? 0 : decimalsParam, 0), 3);
@@ -38,6 +42,7 @@ function initApp() {
     // Set configuration values
     setConfig({
         portfolioIds,
+        subAccounts,
         decimals,
         targetValue,
         assumedYearlyReturn,
@@ -55,6 +60,7 @@ function initApp() {
         // Don't trigger when typing in an input or form is already visible
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
         if (e.key === 'c' || e.key === 'C') {
+            e.preventDefault();
             showForm();
         }
     });

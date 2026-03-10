@@ -5,6 +5,7 @@ import { fetchPortfolioAllocation } from './api.js';
  * Global variables for configuration
  */
 let portfolioIds = [];
+let subAccounts = [];
 let decimals = 0;
 let targetValue = 0;
 let assumedYearlyReturn = 0;
@@ -16,6 +17,7 @@ let monthlyContribution = 0;
  */
 export function setConfig(config) {
     if (config.portfolioIds) portfolioIds = config.portfolioIds;
+    if (config.subAccounts) subAccounts = config.subAccounts;
     if (config.decimals !== undefined) decimals = config.decimals;
     if (config.targetValue !== undefined) targetValue = config.targetValue;
     if (config.assumedYearlyReturn !== undefined) assumedYearlyReturn = config.assumedYearlyReturn;
@@ -28,7 +30,9 @@ export function setConfig(config) {
 export function updateProgress() {
     let sum = 0;
     const requests = portfolioIds.map(portfolioId => {
-        return fetchPortfolioAllocation(portfolioId).then(({ totalValue }) => {
+        const portfolioSubAccounts = subAccounts.filter(subAccount => subAccount.startsWith(`${portfolioId}:`));
+
+        return fetchPortfolioAllocation(portfolioId, portfolioSubAccounts).then(({ totalValue }) => {
             sum += totalValue;
         }).catch(error => {
             console.error(`Failed to fetch portfolio ${portfolioId}:`, error);
